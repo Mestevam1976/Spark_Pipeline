@@ -1,5 +1,7 @@
 # 📊 ANVISA CMED — Automated Spark Pipeline
 
+![ANVISA Spark Pipeline](https://github.com/Mestevam1976/Spark_Pipeline/actions/workflows/pipeline.yml/badge.svg)
+
 Pipeline automatizado de engenharia de dados que processa diariamente a tabela de preços de medicamentos da ANVISA (CMED), calcula métricas agregadas com PySpark e entrega notificações via Telegram e e-mail — sem intervenção manual.
 
 ---
