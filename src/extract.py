@@ -15,7 +15,7 @@ def download_cmed(url, output):
     df_raw = pd.read_excel(BytesIO(r.content), header=None, engine="openpyxl")
     logger.info(f"Shape bruto: {df_raw.shape}")
 
-    for i in range(min(25, len(df_raw))):
+    for i in range(25, 45):
         vals = [str(v) for v in df_raw.iloc[i].tolist() if str(v) != 'nan']
         logger.info(f"Linha {i:02d}: {vals[:8]}")
 
