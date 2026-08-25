@@ -40,6 +40,7 @@ if __name__ == "__main__":
 
         cols = df.columns
         logger.info(f"Colunas ({len(cols)}): {cols[:10]}")
+        logger.info(f"TODAS AS COLUNAS: {list(cols)}")
 
         col_produto = find_col(cols, ["PRODUTO"]) or COL_PRODUTO
         col_lab     = find_col(cols, ["LABORATÓRIO", "LABORATORIO"]) or COL_LAB
