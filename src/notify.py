@@ -24,39 +24,53 @@ def load_metrics(path: str) -> dict:
         return json.load(f)
 
 
-def build_payload(metrics: dict) -> dict:
-    agora     = datetime.now(BRT).strftime("%d/%m/%Y %H:%M")
-    totais    = metrics["totais"]
-    top3      = metrics["top10_mais_caros"][:3]
-    top3_labs = metrics["top10_laboratorios"][:3]
+def fmt(value, decimals=2, prefix="") -> str:
+    """Formata número com segurança — retorna '-' se None."""
+    if value is None:
+        return "-"
+    try:
+        return f"{prefix}{float(value):,.{decimals}f}"
+    except (TypeError, ValueError):
+        return str(value)
 
-    # Mensagem resumida para Telegram
+
+def build_payload(metrics: dict) -> dict:
+    agora   = datetime.now(BRT).strftime("%d/%m/%Y %H:%M")
+    totais  = metrics.get("totais", {})
+    top3    = metrics.get("top10_mais_caros", [])[:3]
+    top3_labs = metrics.get("top10_laboratorios", [])[:3]
+
     telegram_msg = (
         f"📊 *ANVISA CMED — Relatório Diário*\n"
         f"🗓 {agora} (BRT)\n\n"
         f"*Totais*\n"
-        f"• Medicamentos: {totais['total_medicamentos']:,}\n"
-        f"• Laboratórios: {totais['total_laboratorios']:,}\n"
-        f"• Preço PF médio: R$ {totais['preco_pf_medio']:.2f}\n"
-        f"• Preço PF máximo: R$ {totais['preco_pf_maximo']:.2f}\n\n"
-        f"*Top 3 mais caros*\n"
-        + "\n".join(
-            f"{i+1}. {r[list(r.keys())[0]]} — R$ {r['preco_pf']:.2f}"
-            for i, r in enumerate(top3)
-        )
-        + f"\n\n*Top 3 labs por volume*\n"
-        + "\n".join(
-            f"{i+1}. {r[list(r.keys())[0]]} ({r['qtd_produtos']} produtos)"
-            for i, r in enumerate(top3_labs)
-        )
+        f"• Medicamentos: {totais.get('total_medicamentos', '-'):,}\n"
+        f"• Laboratórios: {totais.get('total_laboratorios', '-')}\n"
+        f"• Preço PF médio: R$ {fmt(totais.get('preco_pf_medio'))}\n"
+        f"• Preço PF máximo: R$ {fmt(totais.get('preco_pf_maximo'))}\n"
     )
 
+    if top3:
+        telegram_msg += "\n*Top 3 mais caros*\n"
+        for i, r in enumerate(top3):
+            nome  = r.get("produto") or list(r.values())[0]
+            preco = fmt(r.get("preco_pf"))
+            telegram_msg += f"{i+1}. {nome} — R$ {preco}\n"
+
+    if top3_labs:
+        telegram_msg += "\n*Top 3 labs por volume*\n"
+        for i, r in enumerate(top3_labs):
+            lab = r.get("laboratorio") or list(r.values())[0]
+            qtd = r.get("qtd_produtos", "-")
+            telegram_msg += f"{i+1}. {lab} ({qtd} produtos)\n"
+
     return {
-        "timestamp":        agora,
-        "fonte":            "ANVISA CMED",
-        "pipeline":         "GitHub Actions → PySpark",
-        "telegram_message": telegram_msg,
-        "metrics":          metrics,     # payload completo para o Gmail
+        "timestamp":          agora,
+        "fonte":              "ANVISA CMED",
+        "pipeline":           "GitHub Actions → PySpark",
+        "telegram_chatid":    os.environ.get("TELEGRAM_CHAT_ID", "6383505618"),
+        "telegram_message":   telegram_msg,
+        "metrics":            metrics,
     }
 
 
@@ -78,5 +92,6 @@ def send_webhook(url: str, payload: dict) -> None:
 
 if __name__ == "__main__":
     metrics = load_metrics(METRICS_PATH)
+    logger.info(f"Métricas carregadas — totais: {metrics.get('totais')}")
     payload = build_payload(metrics)
     send_webhook(WEBHOOK_URL, payload)
