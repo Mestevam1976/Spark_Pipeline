@@ -6,22 +6,18 @@ logger = logging.getLogger(__name__)
 
 CMED_URL    = "https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos/arquivos/xls_conformidade_site_20260811_192510234.xlsx/@@download/file"
 OUTPUT_PATH = "data/anvisa_cmed.csv"
+SKIPROWS    = 41
 
 def download_cmed(url, output):
     logger.info(f"Baixando CMED de {url}")
     r = requests.get(url, timeout=120, headers={"User-Agent": "Mozilla/5.0"})
     r.raise_for_status()
-
-    df_raw = pd.read_excel(BytesIO(r.content), header=None, engine="openpyxl")
-    logger.info(f"Shape bruto: {df_raw.shape}")
-
-    for i in range(25, 45):
-        vals = [str(v) for v in df_raw.iloc[i].tolist() if str(v) != 'nan']
-        logger.info(f"Linha {i:02d}: {vals[:8]}")
-
+    df = pd.read_excel(BytesIO(r.content), skiprows=SKIPROWS, engine="openpyxl")
+    df = df.dropna(how="all", axis=0)
     os.makedirs("data", exist_ok=True)
-    df_raw.to_csv(output, index=False, header=False, encoding="utf-8", sep=";")
-    logger.info("Diagnóstico salvo.")
+    df.to_csv(output, index=False, encoding="utf-8", sep=";")
+    logger.info(f"Salvo: {len(df):,} registros | {len(df.columns)} colunas")
+    logger.info(f"Colunas: {list(df.columns[:8])}")
 
 if __name__ == "__main__":
     download_cmed(CMED_URL, OUTPUT_PATH)
