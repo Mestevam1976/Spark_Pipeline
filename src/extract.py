@@ -15,8 +15,7 @@ logger = logging.getLogger(__name__)
 # URL da tabela CMED — verifique a versão mais recente em:
 # https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos
 CMED_URL = (
-    "https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos"
-    "/@@download/file/Conformidades_e_DCB_28_06_2024.xlsx"
+    "https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos/arquivos/xls_conformidade_site_20260811_192510234.xlsx/@@download/file"
 )
 
 OUTPUT_PATH = "data/anvisa_cmed.csv"
