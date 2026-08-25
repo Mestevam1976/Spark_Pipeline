@@ -1,0 +1,47 @@
+name: ANVISA Spark Pipeline
+
+on:
+  schedule:
+    - cron: '0 10 * * *'   # 07:00 BRT (UTC-3) todos os dias
+  workflow_dispatch:         # permite disparo manual pela UI do GitHub
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repositório
+        uses: actions/checkout@v4
+
+      - name: Setup Java 11 (obrigatório para PySpark)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Cache dependências pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Extrair dados ANVISA (CMED)
+        run: python src/extract.py
+
+      - name: Transformar com PySpark
+        run: python src/transform.py
+        env:
+          PYSPARK_PYTHON: python3
+
+      - name: Enviar notificações via n8n
+        run: python src/notify.py
+        env:
+          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}

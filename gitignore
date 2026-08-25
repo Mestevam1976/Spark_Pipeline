@@ -1,0 +1,9 @@
+.env
+data/*.csv
+data/*.xlsx
+data/metrics.json
+__pycache__/
+*.pyc
+.DS_Store
+spark-warehouse/
+derby.log
